@@ -1,54 +1,69 @@
+import axios from "axios";
+
 const getState = ({ getStore, getActions, setStore }) => {
-	return {
-		store: {
-			message: null,
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
-		},
-		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
-			},
+  return {
+    store: {
+      message: null,
+      currentUser: null,
+      isLoggedIn: false,
+    },
+    actions: {
+      login: async (email, password) => {
+        const bodyData = { email, password };
 
-			getMessage: async () => {
-				try{
-					// fetching data from the backend
-					const resp = await fetch(process.env.BACKEND_URL + "/api/hello")
-					const data = await resp.json()
-					setStore({ message: data.message })
-					// don't forget to return something, that is how the async resolves
-					return data;
-				}catch(error){
-					console.log("Error loading message from backend", error)
-				}
-			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
+        try {
+          // Enviar solicitud de inicio de sesión
+          const res = await axios.post(`${process.env.BACKEND_URL}/api/login`, bodyData);
+          const { access_token } = res.data;
 
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
-				});
+          // Verificar si se recibió un token
+          if (access_token) {
+            // Guardar token en localStorage
+            localStorage.setItem("accessToken", access_token);
 
-				//reset the global store
-				setStore({ demo: demo });
-			}
-		}
-	};
+            // Obtener información del usuario actual
+            await getActions().getCurrentUser();
+
+            return true; // Login exitoso
+          }
+          return false; // Fallo en el login
+        } catch (error) {
+          console.log("Error en el login", error);
+          return false; // Fallo en el login
+        }
+      },
+
+      getCurrentUser: async () => {
+        try {
+          // Obtener el token de localStorage
+          const accessToken = localStorage.getItem("accessToken");
+
+          if (!accessToken) throw new Error("Token no disponible");
+
+          // Enviar solicitud para obtener al usuario actual
+          const res = await axios.get(`${process.env.BACKEND_URL}/api/current-user`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+
+          const { current_user: currentUser } = res.data;
+
+          // Actualizar el estado global con la información del usuario
+          setStore({ currentUser, isLoggedIn: true });
+        } catch (error) {
+          console.log("Error obteniendo el usuario actual", error);
+          // En caso de error, limpiar el estado y localStorage
+          localStorage.removeItem("accessToken");
+          setStore({ currentUser: null, isLoggedIn: false });
+        }
+      },
+
+      logout: () => {
+        // Limpiar el token y resetear el estado global al cerrar sesión
+        localStorage.removeItem("accessToken");
+        setStore({ currentUser: null, isLoggedIn: false });
+      },
+    },
+  };
 };
 
 export default getState;
