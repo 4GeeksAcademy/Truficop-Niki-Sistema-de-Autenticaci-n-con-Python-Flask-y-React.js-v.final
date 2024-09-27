@@ -13,7 +13,6 @@ export const Signup = () => {
     e.preventDefault();
 
     try {
-      // Hacer la solicitud POST al backend
       const res = await axios.post(`${process.env.BACKEND_URL}/api/signup`, {
         email,
         password,
@@ -22,7 +21,6 @@ export const Signup = () => {
       });
 
       if (res.status === 201) {
-        // Si el registro es exitoso, redirigir al login
         navigate("/login");
       }
     } catch (error) {
