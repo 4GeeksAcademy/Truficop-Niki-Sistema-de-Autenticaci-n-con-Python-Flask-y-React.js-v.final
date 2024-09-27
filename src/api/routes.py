@@ -367,8 +367,8 @@ def login():
 @api.route("/current-user", methods=["GET"])
 @jwt_required()
 def get_current_user():
-    user_id = get_jwt_identity()  # Obtener el ID del usuario desde el token JWT
-    user = User.query.get(user_id)  # Buscar el usuario en la base de datos por ID
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
 
     if not user:
         return jsonify({"msg": "Usuario no encontrado"}), 404
@@ -378,7 +378,6 @@ def get_current_user():
 
 @api.route('/signup', methods=['POST'])
 def signup():
-    # Obtener los datos del cuerpo de la solicitud (request)
     data = request.get_json()
 
     email = data.get('email')
@@ -386,20 +385,16 @@ def signup():
     nombre = data.get('nombre')
     apellido = data.get('apellido')
 
-    # Validar que todos los campos estén presentes
     if not email or not password or not nombre or not apellido:
         return jsonify({"msg": "Todos los campos son requeridos"}), 400
 
-    # Verificar si el usuario ya existe
     user = User.query.filter_by(email=email).first()
     if user:
         return jsonify({"msg": "El usuario ya existe"}), 400
 
-    # Crear el nuevo usuario
     new_user = User(email=email, password=password, nombre=nombre, apellido=apellido)
 
     try:
-        # Añadir el nuevo usuario a la base de datos
         db.session.add(new_user)
         db.session.commit()
         return jsonify({"msg": "Usuario creado exitosamente"}), 201
