@@ -8,15 +8,11 @@ export const Login = () => {
   const { store, actions } = useContext(Context);
   const navigate = useNavigate();
 
-  // Usamos useRef para crear una referencia que indica si el componente sigue montado
   const isMounted = useRef(true);
 
-  // Efecto para manejar la vida útil del componente
   useEffect(() => {
-    // Marcamos que el componente está montado
     isMounted.current = true;
 
-    // Cuando el componente se desmonta, marcamos isMounted como false
     return () => {
       isMounted.current = false;
     };
@@ -28,14 +24,11 @@ export const Login = () => {
     try {
       const logged = await actions.login(email, password);
 
-      // Verificar si el componente sigue montado antes de actualizar el estado o navegar
       if (logged && isMounted.current) {
         setEmail("");
         setPassword("");
         navigate("/protected");
 
-        // Solo actualizamos el estado si el componente sigue montado
-        
       }
     } catch (error) {
       console.log("Error en el login: ", error);
